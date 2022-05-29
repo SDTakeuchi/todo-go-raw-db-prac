@@ -1,0 +1,50 @@
+version: '3'
+services:
+    db:
+        image: postgres:14.3-alpine
+        container_name: db_todo
+        hostname: postgresql
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            PGPASSWORD: postgres
+            POSTGRES_DB: postgres
+            TZ: "Asia/Tokyo"
+        volumes:
+            - vol_todo:/var/lib/postgresql
+    app:
+        build: ./go
+        container_name: go_app_container
+        hostname: go_app
+        tty: true
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./go/:/go/src/app/
+        depends_on:
+            - db
+    # nginx:
+    #     build: ./nginx
+    #     container_name: nginx_container
+    #     hostname: nginx
+    #     ports:
+    #         - "80:80"
+    #     depends_on:
+    #         - app
+    # frontend:
+    #     build: ./frontend
+    #     container_name: frontend_container
+    #     hostname: frontend
+    #     volumes:
+    #         - ./frontend/personal_page:/usr/src/app
+    #     tty: true
+    #     environment:
+    #         # enables hot reload
+    #         - CHOKIDAR_USEPOLLING=true
+    #     ports:
+    #         - "3000:3000"
+
+volumes:
+    vol_todo:
