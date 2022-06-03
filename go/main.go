@@ -8,6 +8,8 @@ import (
 	_ "github.com/lib/pq"
 	"net/http"
 	"time"
+
+	"todo/model"
 )
 
 const (
@@ -17,16 +19,6 @@ const (
 	DB_HOST     = "db"
 	DB_PORT     = "5432"
 )
-
-type Todo struct {
-	ID        uint64    `json:"id" db:"id"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	Title     string    `json:"title" db:"title"`
-	Memo      string    `json:"memo" db:"memo"`
-	IsDone    bool      `json:"is_done" db:"is_done"`
-	DueDate   time.Time `json:"due_date" db:"due_date"`
-}
 
 var db *sql.DB
 
@@ -58,29 +50,31 @@ func main() {
 	http.ListenAndServe(":8080", r)
 }
 
+func handleError(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte(`{"message": "internal error has occurred"}`))
+	fmt.Println(err)
+}
+
 func Get(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT id, title, memo, is_done, due_date FROM todo")
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"message": "internal error has occurred, db"}`))
+		handleError(w, err)
 		return
 	}
 	defer rows.Close()
-	var todos []Todo
+	var todos []model.Todo
 	for rows.Next() {
-		t := Todo{}
+		var t model.Todo
 		if err := rows.Scan(&t.ID, &t.Title, &t.Memo, &t.IsDone, &t.DueDate); err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"message": "internal error has occurred, loop"}`))
+			handleError(w, err)
 			return
 		}
 		todos = append(todos, t)
 	}
 	res, err := json.Marshal(todos)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"message": "internal error has occurred, json"}`))
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
