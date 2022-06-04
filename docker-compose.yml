@@ -23,6 +23,8 @@ services:
             - "8080:8080"
         volumes:
             - ./go/:/go/src/app/
+        command:
+            - "./start.sh"
         depends_on:
             - db
     # nginx:

@@ -1,6 +1,6 @@
 FROM golang:1.18.1-alpine3.15
 
-WORKDIR /go/ultimate_timer/
+WORKDIR /go/src/app/
 
 RUN apk update \
 &&  apk add --no-cache bash gcc musl-dev \
