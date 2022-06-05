@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"net/http"
@@ -149,12 +150,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	result, err := db.Exec(
-		"UPDATE todos SET title = $2, memo = $3, is_done = $4, due_date = $5 WHERE id = $1",
+		"UPDATE todos SET title = $2, memo = $3, is_done = $4, due_date = $5, updated_at = $6 WHERE id = $1",
 		id,
 		t.Title,
 		t.Memo,
 		t.IsDone,
 		t.DueDate,
+		time.Now(),
 	)
 	if err != nil {
 		HandleError(w, err)
