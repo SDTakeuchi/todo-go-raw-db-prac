@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS todos (
     title varchar(64) NOT NULL,
     memo varchar(1024) NOT NULL,
     is_done boolean NOT NULL,
-    due_date timestamp with time zone
+    due_date TIMESTAMPTZ NOT NULL
 );
 
 insert into todos (title, memo, is_done, due_date) values('eat lunch', 'at 8 am', false, '2004-10-19 10:23:54');

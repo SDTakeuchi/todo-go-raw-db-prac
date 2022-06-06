@@ -56,6 +56,42 @@ func HandleError(w http.ResponseWriter, err error) {
 	fmt.Println(err)
 }
 
+func ValidateCreatedTodo(t model.Todo) error {
+	var errSlice []string
+	if t.Title == "" {
+		err := "empty title."
+		errSlice = append(errSlice, err)
+	}
+	if t.IsDone {
+		err := "new item cannot be done when created."
+		errSlice = append(errSlice, err)
+	}
+	if t.DueDate.Unix() < time.Now().Unix() {
+		err := "due date must be future."
+		errSlice = append(errSlice, err)
+	}
+	if len(errSlice) > 0 {
+		return fmt.Errorf("validation error: %v", errSlice)
+	}
+	return nil
+}
+
+func ValidateUpdatedTodo(t model.Todo) error {
+	var errSlice []string
+	if t.Title == "" {
+		err := "empty title."
+		errSlice = append(errSlice, err)
+	}
+	if t.DueDate.Unix() < time.Now().Unix() {
+		err := "due date must be future."
+		errSlice = append(errSlice, err)
+	}
+	if len(errSlice) > 0 {
+		return fmt.Errorf("validation error: %v", errSlice)
+	}
+	return nil
+}
+
 func Get(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT id, title, memo, is_done, due_date FROM todos")
 	if err != nil {
@@ -116,6 +152,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if err := ValidateCreatedTodo(t); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		body := fmt.Sprintf(`{"message": "%s"}`, err)
+		w.Write([]byte(body))
+		return
+	}
+
 	statement := "INSERT INTO todos (title, memo, is_done, due_date) VALUES ($1, $2, $3, $4) RETURNING id, title, memo, is_done, due_date"
 	stmt, err := db.Prepare(statement)
 	if err != nil {
@@ -148,6 +191,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	if err := ValidateUpdatedTodo(t); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		body := fmt.Sprintf(`{"message": "%s"}`, err)
+		w.Write([]byte(body))
+		return
+	}
 
 	result, err := db.Exec(
 		"UPDATE todos SET title = $2, memo = $3, is_done = $4, due_date = $5, updated_at = $6 WHERE id = $1",
